@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv
+venv/
+ENV/
+entorno_pps/
+
+# Data and Models
+data/
+*.mat
+*.pkl
+*.model
+
+# IDEs
+.vscode/
+.idea/
+.DS_Store
+
+# Brain/Artifacts (LLM generated)
+brain/
+.agents/
+.agent/
+_agents/
+_agent/
+analysis_results.md
+implementation_plan.md
+task.md
+walkthrough.md
+verify_tables.py
