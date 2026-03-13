@@ -1,7 +1,8 @@
 import os
 
 # --- Paths ---
-DATA_PATH = "/home/pedroj/Desktop/pps/data/*.mat"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DATA_PATH = os.path.join(BASE_DIR, "data", "*.mat")
 # For Config 2 compatibility (legacy was using hardcoded Windows paths)
 DEFAULT_SUBJECT_PATTERN = 'subj*.mat'
 

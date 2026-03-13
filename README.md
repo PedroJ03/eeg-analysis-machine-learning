@@ -1,4 +1,4 @@
-# N-Back EEG Machine Learning Analysis
+# eeg-analysis-machine-learning
 
 Este proyecto implementa una arquitectura modular para la clasificación de carga cognitiva (workload) basada en señales EEG (In-Ear). Reemplaza una colección de scripts dispersos por un sistema unificado, eficiente y científicamente riguroso.
 
