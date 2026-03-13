@@ -11,7 +11,7 @@ Este proyecto implementa una arquitectura modular para la clasificación de carg
   - **`src/`**: Módulos internos de procesamiento (ver sección abajo).
   - **`legacy/`**: Carpeta que contiene los scripts originales para referencia histórica.
   - **`main.py`**: El orquestador principal del proyecto y único punto de entrada para ejecución.
-- **`data/`**: Directorio donde deben residir los archivos `.mat` de los sujetos (`subj001.mat`, etc.). No se incluye en el control de versiones.
+- **`data/`**: Contiene los archivos `.mat` de los sujetos (`subj001.mat`, etc.) utilizados en la investigación.
 - **`entorno_pps/`**: Carpeta del entorno virtual de Python (excluida de Git).
 
 ### 🛠️ Detalles de `/src`
@@ -88,3 +88,13 @@ python -m ml_analysis.main [ARGUMENTOS]
 - **Data Leakage**: En el modo `window`, el sistema utiliza `GroupKFold`. Esto previene que ventanas contiguas del mismo bloque se mezclen en entrenamiento y testeo, garantizando que el accuracy reportado sea realista y no inflado por proximidad temporal.
 - **Escalado**: Para modelos SVM, el sistema aplica automáticamente a `StandardScaler` por cada fold de entrenamiento.
 - **Filtros**: El modo `window` aplica un filtro FIR (1-99 Hz) sobre el canal In-Ear.
+
+---
+
+## 📚 Referencia y Créditos
+
+Los datos utilizados en este proyecto provienen del siguiente estudio:
+
+**"Estimating cognitive workload using a commercial in-ear EEG headset"**
+
+Si utilizas este código o los datos para fines académicos, por favor cita el trabajo original.

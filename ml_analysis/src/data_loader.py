@@ -15,7 +15,7 @@ def get_trial_segments(data, experiment):
     Returns (segments, levels, groups)
     """
     ts = data[:, 0].astype(float)
-    inear = data[:, 30].astype(float)
+    inear = data[:, 1].astype(float)
     
     exp = np.array(experiment)
     if exp.ndim == 1 and exp.dtype == object:
@@ -72,8 +72,7 @@ def get_window_epochs(data, experiment):
     """
     # 1. Create Raw MNE
     data_scaled = data.copy()
-    data_scaled[:, 4:30] *= 1e-6 # EEG channels
-    data_scaled[:, 30] *= 1e-6   # InEar channel
+    data_scaled[:, 1] *= 1e-6   # InEar channel (index 1 in optimized data)
     
     info = mne.create_info(ch_names=CH_NAMES, sfreq=SFREQ, ch_types=CH_TYPES)
     raw = mne.io.RawArray(data_scaled.T, info)

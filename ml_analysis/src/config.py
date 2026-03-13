@@ -18,18 +18,9 @@ BANDS = {
     "gamma": (30.0, 100.0)
 }
 
-# --- Channel Names (MNE / Config 2) ---
-CH_NAMES = [
-    'LSL_time', 'ECG', 'EOGh', 'EOGv', 'Fp1', 'F7', 'Fz', 'F3', 'FT9', 'T7',
-    'C3', 'Cz', 'CP1', 'TP9', 'P7', 'P3', 'Pz', 'O1', 'Fp2', 'F8', 'FT10',
-    'F4', 'C4', 'T8', 'CP2', 'TP10', 'P4', 'P8', 'O2', 'Oz', 'InEar'
-]
-
-CH_TYPES = [
-    'misc', 'ecg', 'eog', 'eog', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg',
-    'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg',
-    'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg'
-]
+# --- Channel Names (MNE / Window-based) ---
+CH_NAMES = ['LSL_time', 'InEar']
+CH_TYPES = ['misc', 'eeg']
 
 INEAR_CH = 'InEar'
 EOGH_CH = 'EOGh'

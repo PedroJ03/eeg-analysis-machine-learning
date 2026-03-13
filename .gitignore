@@ -8,8 +8,8 @@ ENV/
 entorno_pps/
 
 # Data and Models
-data/
-*.mat
+# data/ (Tracked)
+# *.mat (Tracked)
 *.pkl
 *.model
 
