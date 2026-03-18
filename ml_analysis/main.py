@@ -3,11 +3,11 @@ import glob
 import os
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split, KFold, GroupKFold
-from .src.config import DATA_PATH
-from .src.data_loader import load_mat_data, get_trial_segments, get_window_epochs
-from .src.features import extract_features_vector
-from .src.models import get_classifier, evaluate_model, format_results
+from sklearn.model_selection import train_test_split, KFold, GroupKFold, StratifiedGroupKFold, GridSearchCV, LeaveOneGroupOut
+from src.config import DATA_PATH
+from src.data_loader import load_mat_data, get_trial_segments, get_window_epochs
+from src.features import extract_features_vector
+from src.models import get_classifier, evaluate_model, format_results
 
 def map_labels(y, task):
     if task == 'binary':
@@ -40,7 +40,7 @@ def run_ws(paths, args):
         # Mapping
         y_final, mask = map_labels(y, args.task)
         if mask is not None:
-            segments = [segments[i] for i in range(len(mask)) if mask[i]]
+            segments = [segments[idx_mask] for idx_mask in range(len(mask)) if mask[idx_mask]]
             y_final = y_final[mask]
             g = g[mask]
             
@@ -50,8 +50,7 @@ def run_ws(paths, args):
         
         if args.config == "window":
             n_groups = len(np.unique(g))
-            # Use GroupKFold to prevent leakage from temporal proximity
-            kf = GroupKFold(n_splits=min(5, n_groups))
+            kf = GroupKFold(n_splits=min(4, n_groups))
             split_iterator = kf.split(X, y_final, groups=g)
         else:
             kf = KFold(n_splits=5, shuffle=True, random_state=42)
@@ -69,7 +68,13 @@ def run_ws(paths, args):
             X_test = scaler.transform(X_test)
             
             clf = get_classifier(args.model)
-            clf.fit(X_train, y_train)
+            
+            # GridSearchCV needs groups to be passed to fit if using StratifiedGroupKFold
+            if isinstance(clf, GridSearchCV):
+                clf.fit(X_train, y_train, groups=g[train_idx])
+            else:
+                clf.fit(X_train, y_train)
+            
             y_pred = clf.predict(X_test)
             
             subject_fold_acc.append(accuracy_score(y_test, y_pred))
@@ -89,10 +94,13 @@ from sklearn.metrics import accuracy_score
 def run_group(paths, args):
     all_X = []
     all_y = []
+    all_groups = []
     
     print(f"Pooling data from {len(paths)} subjects for Group analysis...")
     
-    for path in paths:
+    from sklearn.preprocessing import StandardScaler
+    
+    for i, path in enumerate(paths):
         data, exp = load_mat_data(path)
         if args.config == "trial":
             segments, y, g = get_trial_segments(data, exp)
@@ -103,26 +111,53 @@ def run_group(paths, args):
         
         y_final, mask = map_labels(y, args.task)
         if mask is not None:
-            segments = [segments[i] for i in range(len(mask)) if mask[i]]
+            segments = [segments[idx_mask] for idx_mask in range(len(mask)) if mask[idx_mask]]
             y_final = y_final[mask]
             
         X = np.array([extract_features_vector(s, groups=args.features) for s in segments])
+        
+        # --- Modificacion 1: Normalización Intra-Sujeto ---
+        scaler = StandardScaler()
+        X = scaler.fit_transform(X)
+        
         all_X.append(X)
         all_y.append(y_final)
+        # Keep track of which windows belong to which subject
+        all_groups.append(np.full(len(y_final), i))
         
     X_pool = np.concatenate(all_X)
     y_pool = np.concatenate(all_y)
+    g_pool = np.concatenate(all_groups)
     
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_pool, y_pool, test_size=0.2, stratify=y_pool, random_state=42
-    )
+    logo = LeaveOneGroupOut()
     
-    clf = get_classifier(args.model)
-    clf.fit(X_train, y_train)
-    y_pred = clf.predict(X_test)
+    all_acc = []
+    all_y_true = []
+    all_y_pred = []
     
-    results = evaluate_model(y_test, y_pred)
-    format_results(results, title=f"Group Analysis Results ({args.task}, {args.model}, feats={args.features})")
+    for train_idx, test_idx in logo.split(X_pool, y_pool, g_pool):
+        X_train, X_test = X_pool[train_idx], X_pool[test_idx]
+        y_train, y_test = y_pool[train_idx], y_pool[test_idx]
+        g_train, g_test = g_pool[train_idx], g_pool[test_idx]
+        
+        clf = get_classifier(args.model)
+        if isinstance(clf, GridSearchCV):
+            clf.fit(X_train, y_train, groups=g_train)
+        else:
+            clf.fit(X_train, y_train)
+            
+        y_pred = clf.predict(X_test)
+        
+        acc = accuracy_score(y_test, y_pred)
+        all_acc.append(acc)
+        all_y_true.extend(y_test)
+        all_y_pred.extend(y_pred)
+        
+        print(f"Subject Fold {g_test[0]}: {acc:.4f}")
+        
+    global_results = evaluate_model(all_y_true, all_y_pred)
+    format_results(global_results, title=f"Group Analysis Results ({args.task}, {args.model}, feats={args.features})")
+    print(f"Mean LOG Accuracy: {np.mean(all_acc):.4f}")
 
 def main():
     parser = argparse.ArgumentParser(description="Unified N-Back Model Training")
