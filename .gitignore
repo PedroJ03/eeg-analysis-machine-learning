@@ -29,3 +29,20 @@ implementation_plan.md
 task.md
 walkthrough.md
 verify_tables.py
+
+# Archivos CSV (excluir de Git)
+*.csv
+
+# Archivos de datos consolidados (se regeneran)
+datos_consolidados_tesis.csv
+
+# Logs temporales
+*.log
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+*.ipynb

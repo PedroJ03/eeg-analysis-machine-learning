@@ -48,14 +48,10 @@ def run_ws(paths, args):
         
         X = np.array([extract_features_vector(s, groups=args.features) for s in segments])
         
-        if args.config == "window":
-            n_groups = len(np.unique(g))
-            kf = GroupKFold(n_splits=min(4, n_groups))
-            split_iterator = kf.split(X, y_final, groups=g)
-        else:
-            kf = KFold(n_splits=5, shuffle=True, random_state=42)
-            split_iterator = kf.split(X)
-            
+        n_groups = len(np.unique(g))
+        kf = GroupKFold(n_splits=min(4, n_groups))
+        split_iterator = kf.split(X, y_final, groups=g)
+        
         from sklearn.preprocessing import StandardScaler
         
         subject_fold_acc = []

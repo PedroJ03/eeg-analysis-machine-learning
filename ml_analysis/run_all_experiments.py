@@ -18,6 +18,50 @@ from src.data_loader import load_mat_data, get_trial_segments, get_window_epochs
 from src.features import extract_features_vector
 from src.models import get_classifier
 
+
+def get_feature_description(features_str):
+    """Devuelve descripción legible de las features utilizadas."""
+    descriptions = {
+        'B': 'Band Power (δ, θ, α, β) - Sin Gamma',
+        'Bg': 'Band Power (δ, θ, α, β, γ) - Con Gamma',
+        'E': 'Estadísticas Temporales (media, std, skewness, kurtosis, line length)',
+        'W': 'Energías Wavelet (Daubechies-4, nivel 4)'
+    }
+    
+    feature_list = features_str.split(',')
+    desc_parts = []
+    for f in feature_list:
+        f = f.strip()
+        if f in descriptions:
+            desc_parts.append(f"  • {f}: {descriptions[f]}")
+    return "\n".join(desc_parts)
+
+
+def get_feature_combination_name(features_str):
+    """Genera nombre legible de la combinación de features."""
+    feature_map = {
+        'B': 'Bandas',
+        'Bg': 'Bandas+γ',
+        'E': 'Estadísticas',
+        'W': 'Wavelet'
+    }
+    feature_list = [f.strip() for f in features_str.split(',')]
+    names = [feature_map.get(f, f) for f in feature_list]
+    return ' + '.join(names)
+
+
+def print_config_summary(features_str):
+    """Imprime resumen descriptivo de la configuración de features."""
+    combo_name = get_feature_combination_name(features_str)
+    print("\n" + "="*76)
+    print(" CONFIGURACIÓN DE FEATURES ".center(76, "="))
+    print("="*76)
+    print(f"\nCombinación: {combo_name}")
+    print(f"Código: {features_str}")
+    print(f"\nDescripción detallada:")
+    print(get_feature_description(features_str))
+    print("="*76 + "\n")
+
 def map_labels(y, task):
     if task == 'binary':
         # 0-1 -> 0, 2-3 -> 1
@@ -143,6 +187,7 @@ def main():
         print("No subjects found.")
         return
         
+    print_config_summary(args.features)
     print(f"--- Extrayendo descriptores (Features: {args.features}) ---")
     print("Esto puede tardar un momento, pero se cacheará para todas las configuraciones...")
     
@@ -205,20 +250,82 @@ def main():
         })
         print(f" ACC: {acc:.4f}")
         
-    # Print Table
-    print("\n" + "="*76)
-    print(f" TABLA DE RESULTADOS OBTENIDOS (Features: {args.features})".center(76))
-    print("="*76)
-    print(f"{'Configuración':<15} | {'Tarea':<10} | {'Evaluación':<10} | {'Modelo':<8} | {'Exactitud (Acc)':<15}")
-    print("-" * 76)
+    # Print Results
+    combo_name = get_feature_combination_name(args.features)
+    print("\n" + "="*100)
+    print(f" RESULTADOS: {combo_name} ".center(100, "="))
+    print("="*100)
     
-    # Sort results for better display (by configuration, then by best accuracy)
-    results.sort(key=lambda x: (x['Config'], -x['Accuracy']))
+    # Convert to DataFrame for easier manipulation
+    df = pd.DataFrame(results)
     
-    for r in results:
-        print(f"{r['Config']:<15} | {r['Task']:<10} | {r['Eval']:<10} | {r['Model']:<8} | {r['Accuracy']:.4f}")
+    # Print detailed table
+    print(f"\n{'Config':<8} | {'Tarea':<10} | {'Eval':<5} | {'Modelo':<5} | {'Accuracy':<10} | {'Descripción'}")
+    print("-" * 100)
     
-    print("="*76)
+    # Sort: by Config, then by Eval, then by Accuracy (descending)
+    df_sorted = df.sort_values(['Config', 'Eval', 'Accuracy'], ascending=[True, True, False])
+    
+    task_desc = {
+        '4level': '4 clases (0,1,2,3)',
+        'binary': 'Binario (0-1 vs 2-3)',
+        'extremes': 'Extremos (0 vs 3)'
+    }
+    eval_desc = {
+        'ws': 'Within-Subject',
+        'group': 'Leave-One-Subject-Out'
+    }
+    
+    for _, r in df_sorted.iterrows():
+        desc = f"{task_desc.get(r['Task'], r['Task'])} | {eval_desc.get(r['Eval'], r['Eval'])}"
+        print(f"{r['Config']:<8} | {r['Task']:<10} | {r['Eval']:<5} | {r['Model']:<5} | {r['Accuracy']:.4f}     | {desc}")
+    
+    print("="*100)
+    
+    # Print summary by best results
+    print("\n" + "-"*100)
+    print(" TOP 10 MEJORES RESULTADOS ".center(100, "-"))
+    print("-"*100)
+    df_top = df.sort_values('Accuracy', ascending=False).head(10)
+    print(f"{'Rank':<6} | {'Config':<8} | {'Tarea':<10} | {'Eval':<5} | {'Modelo':<5} | {'Accuracy':<10}")
+    print("-" * 100)
+    for i, (_, r) in enumerate(df_top.iterrows(), 1):
+        print(f"{i:<6} | {r['Config']:<8} | {r['Task']:<10} | {r['Eval']:<5} | {r['Model']:<5} | {r['Accuracy']:.4f}")
+    print("-"*100)
+    
+    # Print summary statistics
+    print("\n" + "-"*100)
+    print(" ESTADÍSTICAS POR GRUPO ".center(100, "-"))
+    print("-"*100)
+    
+    # By Config
+    print("\nPor Configuración (promedio):")
+    config_stats = df.groupby('Config')['Accuracy'].agg(['mean', 'std', 'max']).round(4)
+    print(config_stats.to_string())
+    
+    # By Task
+    print("\nPor Tarea (promedio):")
+    task_stats = df.groupby('Task')['Accuracy'].agg(['mean', 'std', 'max']).round(4)
+    print(task_stats.to_string())
+    
+    # By Eval
+    print("\nPor Modo de Evaluación (promedio):")
+    eval_stats = df.groupby('Eval')['Accuracy'].agg(['mean', 'std', 'max']).round(4)
+    print(eval_stats.to_string())
+    
+    # By Model
+    print("\nPor Modelo (promedio):")
+    model_stats = df.groupby('Model')['Accuracy'].agg(['mean', 'std', 'max']).round(4)
+    print(model_stats.to_string())
+    
+    print("\n" + "="*100)
+    print(f" RESUMEN EJECUTIVO: {combo_name} ".center(100, "="))
+    print("="*100)
+    print(f"• Mejor accuracy: {df['Accuracy'].max():.4f}")
+    print(f"• Accuracy promedio: {df['Accuracy'].mean():.4f}")
+    print(f"• Accuracy mínima: {df['Accuracy'].min():.4f}")
+    print(f"• Total de experimentos: {len(df)}")
+    print("="*100)
 
 if __name__ == "__main__":
     main()
