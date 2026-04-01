@@ -1,9 +1,14 @@
 import argparse
 import glob
 import os
+import sys
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split, KFold, GroupKFold, StratifiedGroupKFold, GridSearchCV, LeaveOneGroupOut
+
+# Permitir importaciones si se ejecuta como modulo desde la raiz
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from src.config import DATA_PATH
 from src.data_loader import load_mat_data, get_trial_segments, get_window_epochs
 from src.features import extract_features_vector
