@@ -36,6 +36,11 @@ eeg-analysis-machine-learning/
 │   └── run_all_experiments.py   # Ejecutor de experimentos batch
 │
 ├── 📁 docs/                     # Documentación y figuras
+│   ├── 📁 diagramas/            # Diagramas del sistema
+│   │   ├── 01_arquitectura_general.png
+│   │   ├── 02_pipeline_procesamiento.png
+│   │   ├── 03_flujo_trabajo.png
+│   │   └── 04_componentes.png
 │   ├── 📁 figuras/              # Gráficos de análisis
 │   │   ├── comparativa_detallada/
 │   │   ├── loso/
@@ -210,6 +215,17 @@ docs/figuras/
 └── ws/                         # Resultados Intra-Sujeto
 ```
 
+### Diagramas del Sistema
+
+Los diagramas de arquitectura se encuentran en `docs/diagramas/`:
+
+| Diagrama | Descripción |
+|----------|-------------|
+| `01_arquitectura_general.png` | Vista general del sistema por capas |
+| `02_pipeline_procesamiento.png` | Pipeline de procesamiento de datos EEG |
+| `03_flujo_trabajo.png` | Flujo de trabajo de experimentos |
+| `04_componentes.png` | Diagrama de componentes del módulo ml_analysis |
+
 ---
 
 ## 🎯 Configuración Óptima
@@ -255,18 +271,4 @@ Si utilizas este código o datos para fines académicos, por favor cita el traba
 
 ---
 
-## 🤝 Contribuciones
 
-Este proyecto fue desarrollado como parte de una tesis de Ingeniería en Sistemas. Para contribuciones o preguntas, abre un issue o contacta al autor.
-
----
-
-## 📄 Licencia
-
-Este proyecto es de uso académico. Consulta el archivo LICENSE para más detalles.
-
----
-
-**Autor:** [Tu Nombre]  
-**Tesis:** Ingeniería en Sistemas - Clasificación de Carga Cognitiva mediante EEG  
-**Fecha:** 2025
