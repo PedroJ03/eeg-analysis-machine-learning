@@ -1,0 +1,80 @@
+
+============================================================================
+======================== CONFIGURACIÓN DE FEATURES =========================
+============================================================================
+
+Combinación: R
+Código: R
+
+Descripción detallada:
+  • R: Spectral Ratios (TAR, BTR, GAR)
+============================================================================
+
+--- Extrayendo descriptores (Features: R) ---
+Esto puede tardar un momento, pero se cacheará para todas las configuraciones...
+
+--- Ejecutando Experimentos Combinados ---
+[01/24] Config: trial  | Task: 4level   | Eval: ws    | Model: rf  ... ACC: 0.3506
+[02/24] Config: trial  | Task: 4level   | Eval: ws    | Model: svm ... ACC: 0.3506
+[03/24] Config: trial  | Task: 4level   | Eval: group | Model: rf  ... ACC: 0.2373
+[04/24] Config: trial  | Task: 4level   | Eval: group | Model: svm ... ACC: 0.2538
+[05/24] Config: trial  | Task: binary   | Eval: ws    | Model: rf  ... ACC: 0.6143
+[06/24] Config: trial  | Task: binary   | Eval: ws    | Model: svm ... ACC: 0.6091
+[07/24] Config: trial  | Task: binary   | Eval: group | Model: rf  ... ACC: 0.5040
+[08/24] Config: trial  | Task: binary   | Eval: group | Model: svm ... ACC: 0.5425
+[09/24] Config: trial  | Task: extremes | Eval: ws    | Model: rf  ... ACC: 0.6189
+[10/24] Config: trial  | Task: extremes | Eval: ws    | Model: svm ... ACC: 0.6402
+[11/24] Config: trial  | Task: extremes | Eval: group | Model: rf  ... ACC: 0.4877
+[12/24] Config: trial  | Task: extremes | Eval: group | Model: svm ... ACC: 0.4993
+[13/24] Config: window | Task: 4level   | Eval: ws    | Model: rf  ... ACC: 0.2970
+[14/24] Config: window | Task: 4level   | Eval: ws    | Model: svm ... ACC: 0.3350
+[15/24] Config: window | Task: 4level   | Eval: group | Model: rf  ... ACC: 0.2723
+[16/24] Config: window | Task: 4level   | Eval: group | Model: svm ... ACC: 0.2549
+[17/24] Config: window | Task: binary   | Eval: ws    | Model: rf  ... ACC: 0.5595
+[18/24] Config: window | Task: binary   | Eval: ws    | Model: svm ... ACC: 0.5724
+[19/24] Config: window | Task: binary   | Eval: group | Model: rf  ... ACC: 0.5056
+[20/24] Config: window | Task: binary   | Eval: group | Model: svm ... ACC: 0.4833
+[21/24] Config: window | Task: extremes | Eval: ws    | Model: rf  ... ACC: 0.6389
+[22/24] Config: window | Task: extremes | Eval: ws    | Model: svm ... ACC: 0.6394
+[23/24] Config: window | Task: extremes | Eval: group | Model: rf  ... ACC: 0.5171
+[24/24] Config: window | Task: extremes | Eval: group | Model: svm ... ACC: 0.5087
+
+====================================================================================================
+====================================== RESULTADOS: R ==============================================
+====================================================================================================
+
+Config   | Tarea      | Eval  | Modelo | Accuracy   | Descripción
+----------------------------------------------------------------------------------------------------
+trial    | 4level     | ws    | rf     | 0.3506     | 4 Clases (0,1,2,3) | Within-Subject
+trial    | 4level     | ws    | svm    | 0.3506     | 4 Clases (0,1,2,3) | Within-Subject
+trial    | 4level     | group  | rf     | 0.2373     | 4 Clases (0,1,2,3) | Leave-One-Subject-Out
+trial    | 4level     | group  | svm    | 0.2538     | 4 Clases (0,1,2,3) | Leave-One-Subject-Out
+trial    | binary     | ws    | rf     | 0.6143     | Binario (0-1 vs 2-3) | Within-Subject
+trial    | binary     | ws    | svm    | 0.6091     | Binario (0-1 vs 2-3) | Within-Subject
+trial    | binary     | group  | rf     | 0.5040     | Binario (0-1 vs 2-3) | Leave-One-Subject-Out
+trial    | binary     | group  | svm    | 0.5425     | Binario (0-1 vs 2-3) | Leave-One-Subject-Out
+trial    | extremes   | ws    | rf     | 0.6189     | Extremos (0 vs 3) | Within-Subject
+trial    | extremes   | ws    | svm    | 0.6402     | Extremos (0 vs 3) | Within-Subject
+trial    | extremes   | group  | rf     | 0.4877     | Extremos (0 vs 3) | Leave-One-Subject-Out
+trial    | extremes   | group  | svm    | 0.4993     | Extremos (0 vs 3) | Leave-One-Subject-Out
+window   | 4level     | ws    | rf     | 0.2970     | 4 Clases (0,1,2,3) | Within-Subject
+window   | 4level     | ws    | svm    | 0.3350     | 4 Clases (0,1,2,3) | Within-Subject
+window   | 4level     | group  | rf     | 0.2723     | 4 Clases (0,1,2,3) | Leave-One-Subject-Out
+window   | 4level     | group  | svm    | 0.2549     | 4 Clases (0,1,2,3) | Leave-One-Subject-Out
+window   | binary     | ws    | rf     | 0.5595     | Binario (0-1 vs 2-3) | Within-Subject
+window   | binary     | ws    | svm    | 0.5724     | Binario (0-1 vs 2-3) | Within-Subject
+window   | binary     | group  | rf     | 0.5056     | Binario (0-1 vs 2-3) | Leave-One-Subject-Out
+window   | binary     | group  | svm    | 0.4833     | Binario (0-1 vs 2-3) | Leave-One-Subject-Out
+window   | extremes   | ws    | rf     | 0.6389     | Extremos (0 vs 3) | Within-Subject
+window   | extremes   | ws    | svm    | 0.6394     | Extremos (0 vs 3) | Within-Subject
+window   | extremes   | group  | rf     | 0.5171     | Extremos (0 vs 3) | Leave-One-Subject-Out
+window   | extremes   | group  | svm    | 0.5087     | Extremos (0 vs 3) | Leave-One-Subject-Out
+
+====================================================================================================
+==================================== RESUMEN EJECUTIVO: R ========================================
+====================================================================================================
+• Mejor accuracy: 0.6402
+• Accuracy promedio: 0.4688
+• Accuracy mínima: 0.2373
+• Total de experimentos: 24
+====================================================================================================

@@ -1,0 +1,80 @@
+
+============================================================================
+======================== CONFIGURACIÓN DE FEATURES =========================
+============================================================================
+
+Combinación: Wavelet
+Código: W
+
+Descripción detallada:
+  • W: Energías Wavelet (Daubechies-4, nivel 4)
+============================================================================
+
+--- Extrayendo descriptores (Features: W) ---
+Esto puede tardar un momento, pero se cacheará para todas las configuraciones...
+
+--- Ejecutando Experimentos Combinados ---
+[01/24] Config: trial  | Task: 4level   | Eval: ws    | Model: rf  ... ACC: 0.4625
+[02/24] Config: trial  | Task: 4level   | Eval: ws    | Model: svm ... ACC: 0.4244
+[03/24] Config: trial  | Task: 4level   | Eval: group | Model: rf  ... ACC: 0.2754
+[04/24] Config: trial  | Task: 4level   | Eval: group | Model: svm ... ACC: 0.2406
+[05/24] Config: trial  | Task: binary   | Eval: ws    | Model: rf  ... ACC: 0.6954
+[06/24] Config: trial  | Task: binary   | Eval: ws    | Model: svm ... ACC: 0.6526
+[07/24] Config: trial  | Task: binary   | Eval: group | Model: rf  ... ACC: 0.5138
+[08/24] Config: trial  | Task: binary   | Eval: group | Model: svm ... ACC: 0.4750
+[09/24] Config: trial  | Task: extremes | Eval: ws    | Model: rf  ... ACC: 0.7344
+[10/24] Config: trial  | Task: extremes | Eval: ws    | Model: svm ... ACC: 0.7336
+[11/24] Config: trial  | Task: extremes | Eval: group | Model: rf  ... ACC: 0.5133
+[12/24] Config: trial  | Task: extremes | Eval: group | Model: svm ... ACC: 0.4940
+[13/24] Config: window | Task: 4level   | Eval: ws    | Model: rf  ... ACC: 0.3350
+[14/24] Config: window | Task: 4level   | Eval: ws    | Model: svm ... ACC: 0.3350
+[15/24] Config: window | Task: 4level   | Eval: group | Model: rf  ... ACC: 0.2599
+[16/24] Config: window | Task: 4level   | Eval: group | Model: svm ... ACC: 0.2493
+[17/24] Config: window | Task: binary   | Eval: ws    | Model: rf  ... ACC: 0.6042
+[18/24] Config: window | Task: binary   | Eval: ws    | Model: svm ... ACC: 0.6029
+[19/24] Config: window | Task: binary   | Eval: group | Model: rf  ... ACC: 0.5471
+[20/24] Config: window | Task: binary   | Eval: group | Model: svm ... ACC: 0.5301
+[21/24] Config: window | Task: extremes | Eval: ws    | Model: rf  ... ACC: 0.6156
+[22/24] Config: window | Task: extremes | Eval: ws    | Model: svm ... ACC: 0.6151
+[23/24] Config: window | Task: extremes | Eval: group | Model: rf  ... ACC: 0.5335
+[24/24] Config: window | Task: extremes | Eval: group | Model: svm ... ACC: 0.5258
+
+====================================================================================================
+================================== RESULTADOS: Wavelet ==================================
+====================================================================================================
+
+Config   | Tarea      | Eval  | Modelo | Accuracy   | Descripción
+----------------------------------------------------------------------------------------------------
+trial    | 4level     | ws    | rf    | 0.4625     | 4 Clases (0,1,2,3) | Within-Subject
+trial    | 4level     | ws    | svm   | 0.4244     | 4 Clases (0,1,2,3) | Within-Subject
+trial    | 4level     | group | rf    | 0.2754     | 4 Clases (0,1,2,3) | Leave-One-Subject-Out
+trial    | 4level     | group | svm   | 0.2406     | 4 Clases (0,1,2,3) | Leave-One-Subject-Out
+trial    | binary     | ws    | rf    | 0.6954     | Binario (0-1 vs 2-3) | Within-Subject
+trial    | binary     | ws    | svm   | 0.6526     | Binario (0-1 vs 2-3) | Within-Subject
+trial    | binary     | group | rf    | 0.5138     | Binario (0-1 vs 2-3) | Leave-One-Subject-Out
+trial    | binary     | group | svm   | 0.4750     | Binario (0-1 vs 2-3) | Leave-One-Subject-Out
+trial    | extremes   | ws    | rf    | 0.7344     | Extremos (0 vs 3) | Within-Subject
+trial    | extremes   | ws    | svm   | 0.7336     | Extremos (0 vs 3) | Within-Subject
+trial    | extremes   | group | rf    | 0.5133     | Extremos (0 vs 3) | Leave-One-Subject-Out
+trial    | extremes   | group | svm   | 0.4940     | Extremos (0 vs 3) | Leave-One-Subject-Out
+window   | 4level     | ws    | rf    | 0.3350     | 4 Clases (0,1,2,3) | Within-Subject
+window   | 4level     | ws    | svm   | 0.3350     | 4 Clases (0,1,2,3) | Within-Subject
+window   | 4level     | group | rf    | 0.2599     | 4 Clases (0,1,2,3) | Leave-One-Subject-Out
+window   | 4level     | group | svm   | 0.2493     | 4 Clases (0,1,2,3) | Leave-One-Subject-Out
+window   | binary     | ws    | rf    | 0.6042     | Binario (0-1 vs 2-3) | Within-Subject
+window   | binary     | ws    | svm   | 0.6029     | Binario (0-1 vs 2-3) | Within-Subject
+window   | binary     | group | rf    | 0.5471     | Binario (0-1 vs 2-3) | Leave-One-Subject-Out
+window   | binary     | group | svm   | 0.5301     | Binario (0-1 vs 2-3) | Leave-One-Subject-Out
+window   | extremes   | ws    | rf    | 0.6156     | Extremos (0 vs 3) | Within-Subject
+window   | extremes   | ws    | svm   | 0.6151     | Extremos (0 vs 3) | Within-Subject
+window   | extremes   | group | rf    | 0.5335     | Extremos (0 vs 3) | Leave-One-Subject-Out
+window   | extremes   | group | svm   | 0.5258     | Extremos (0 vs 3) | Leave-One-Subject-Out
+
+====================================================================================================
+==================================== RESUMEN EJECUTIVO: Wavelet ====================================
+====================================================================================================
+• Mejor accuracy: 0.7344
+• Accuracy promedio: 0.4953
+• Accuracy mínima: 0.2406
+• Total de experimentos: 24
+====================================================================================================
