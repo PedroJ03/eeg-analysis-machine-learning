@@ -1,9 +1,8 @@
 """
-Feature Saturation Analysis
+Feature Saturation Analysis - CON GAMMA (Bg)
 ============================
-Ejecuta experimentos incrementales, agregando grupos de features de forma
-progresiva para observar si la precisión se estanca (satura) o sigue
-aumentando con cada nuevo grupo.
+Ejecuta experimentos incrementales con BANDAS ESPECTRALES CON GAMMA,
+agregando grupos de features de forma progresiva.
 
 Genera gráficas aptas para incluir en un informe de tesis.
 """
@@ -34,22 +33,22 @@ from src.models import get_classifier
 
 
 # ─── Feature Group Definitions ───────────────────────────────────────────────
-# Each step adds one group. The key is the cumulative groups string,
-# the label is what shows in the plot.
+# CADA PASO USA Bg (Bandas CON Gamma) en lugar de B (sin Gamma)
+# ORDEN CORREGIDO: EBg (no BEg) para mantener consistencia con el pipeline
 PROGRESSIVE_STEPS = [
     {'groups': 'E',          'label': 'Stats',                    'added': 'E (Estadisticas)'},
-    {'groups': 'BE',         'label': '+ Bandas',                 'added': 'B (Band Power)'},
-    {'groups': 'BEW',        'label': '+ Wavelet',                'added': 'W (Wavelet)'},
-    {'groups': 'BEWR',       'label': '+ Ratios',                 'added': 'R (Ratios Espectrales)'},
-    {'groups': 'BEWRH',      'label': '+ Hjorth',                 'added': 'H (Hjorth)'},
-    {'groups': 'BEWRHN',     'label': '+ Entropia',               'added': 'N (Sample/Spectral Ent)'},
-    {'groups': 'BEWRHNZ',    'label': '+ Z-Cross',                'added': 'Z (Zero Crossing)'},
+    {'groups': 'EBg',        'label': '+ Bandas (con Gamma)',     'added': 'Bg (Band Power + Gamma)'},
+    {'groups': 'EBgW',       'label': '+ Wavelet',                'added': 'W (Wavelet)'},
+    {'groups': 'EBgWR',      'label': '+ Ratios',                 'added': 'R (Ratios Espectrales)'},
+    {'groups': 'EBgWRH',     'label': '+ Hjorth',                 'added': 'H (Hjorth)'},
+    {'groups': 'EBgWRHN',    'label': '+ Entropia',               'added': 'N (Sample/Spectral Ent)'},
+    {'groups': 'EBgWRHNZ',   'label': '+ Z-Cross',                'added': 'Z (Zero Crossing)'},
 ]
 
-# Feature count per group (for annotations)
+# Feature count per group (Bg tiene 5 features: delta, theta, alpha, beta, gamma)
 GROUP_FEATURE_COUNT = {
     'E': 8,   
-    'B': 4,   
+    'Bg': 5,   # CAMBIO: 5 bandas con gamma (delta, theta, alpha, beta, gamma)
     'W': 5,   
     'R': 3,   
     'H': 3,   
@@ -195,6 +194,9 @@ def run_saturation_analysis():
         return
 
     print(f"Sujetos encontrados: {len(subject_paths)}")
+    print(f"{'='*70}")
+    print("EJECUTANDO ANALISIS CON BANDAS ESPECTRALES CON GAMMA (Bg)")
+    print(f"{'='*70}")
 
     configs = ['trial', 'window']
     tasks   = ['binary', 'extremes', '4level']
@@ -204,7 +206,8 @@ def run_saturation_analysis():
     # Read existing outcomes to save training time
     output_dir = os.path.join(os.path.dirname(__file__), 'results')
     os.makedirs(output_dir, exist_ok=True)
-    csv_path = os.path.join(output_dir, 'feature_saturation_results.csv')
+    # Archivo CSV diferente para no sobreescribir los resultados sin gamma
+    csv_path = os.path.join(output_dir, 'feature_saturation_results_CON_GAMMA.csv')
 
     evaluated_cache = {}
     if os.path.exists(csv_path):
@@ -314,7 +317,7 @@ def generate_plots(df, n_features_per_step, output_dir):
 
     # ─── Plot 1: Accuracy vs Feature Step (one line per task, averaged over models/configs) ───
     fig, axes = plt.subplots(1, 2, figsize=(16, 7), sharey=True)
-    fig.suptitle('Analisis de Saturacion de Features - Accuracy vs Grupos de Features',
+    fig.suptitle('Analisis de Saturacion de Features CON GAMMA - Accuracy vs Grupos de Features',
                  fontsize=14, fontweight='bold', y=1.02)
 
     task_colors = {'binary': '#2196F3', 'extremes': '#4CAF50', '4level': '#FF5722'}
@@ -359,14 +362,14 @@ def generate_plots(df, n_features_per_step, output_dir):
         ax2.set_xlabel('Dimensiones', fontsize=9, color='gray')
 
     plt.tight_layout()
-    path1 = os.path.join(output_dir, 'saturation_by_task.png')
+    path1 = os.path.join(output_dir, 'saturation_CON_GAMMA_by_task.png')
     fig.savefig(path1, dpi=150, bbox_inches='tight')
     print(f"Grafica guardada: {path1}")
     plt.close(fig)
 
     # ─── Plot 2: Accuracy vs Feature Step (one line per model, split by eval) ───
     fig, axes = plt.subplots(1, 2, figsize=(16, 7), sharey=True)
-    fig.suptitle('Analisis de Saturacion - Comparacion por Modelo',
+    fig.suptitle('Analisis de Saturacion CON GAMMA - Comparacion por Modelo',
                  fontsize=14, fontweight='bold', y=1.02)
 
     model_colors = {'rf': '#9C27B0', 'svm': '#FF9800'}
@@ -409,14 +412,14 @@ def generate_plots(df, n_features_per_step, output_dir):
         ax2.set_xlabel('Dimensiones', fontsize=9, color='gray')
 
     plt.tight_layout()
-    path2 = os.path.join(output_dir, 'saturation_by_model.png')
+    path2 = os.path.join(output_dir, 'saturation_CON_GAMMA_by_model.png')
     fig.savefig(path2, dpi=150, bbox_inches='tight')
     print(f"Grafica guardada: {path2}")
     plt.close(fig)
 
     # ─── Plot 3: Delta Accuracy (marginal gain per step) ───
     fig, ax = plt.subplots(figsize=(14, 6))
-    fig.suptitle('Ganancia Marginal de Accuracy por Grupo de Features Agregado',
+    fig.suptitle('Ganancia Marginal de Accuracy CON GAMMA por Grupo de Features Agregado',
                  fontsize=14, fontweight='bold')
 
     bar_width = 0.15
@@ -466,7 +469,7 @@ def generate_plots(df, n_features_per_step, output_dir):
     ax.grid(True, alpha=0.3, axis='y')
 
     plt.tight_layout()
-    path3 = os.path.join(output_dir, 'saturation_marginal_gain.png')
+    path3 = os.path.join(output_dir, 'saturation_CON_GAMMA_marginal_gain.png')
     fig.savefig(path3, dpi=150, bbox_inches='tight')
     print(f"Grafica guardada: {path3}")
     plt.close(fig)
@@ -475,12 +478,12 @@ def generate_plots(df, n_features_per_step, output_dir):
 def print_summary_table(df):
     """Print a comprehensive summary table."""
     print("\n" + "=" * 90)
-    print(" TABLA RESUMEN - FEATURE SATURATION ANALYSIS ".center(90, "="))
+    print(" TABLA RESUMEN - FEATURE SATURATION ANALYSIS CON GAMMA ".center(90, "="))
     print("=" * 90)
 
     task_names = {'binary': 'Bin', 'extremes': 'Ext', '4level': '4Lv'}
 
-    header = f"{'Step':<16} | {'N':<3}"
+    header = f"{'Step':<25} | {'N':<3}"
     for task in ['binary', 'extremes', '4level']:
         for eval_mode in ['ws', 'group']:
             short_eval = 'WS' if eval_mode == 'ws' else 'LOSO'
@@ -492,7 +495,7 @@ def print_summary_table(df):
     for step_idx, step in enumerate(PROGRESSIVE_STEPS):
         step_df = df[df['step'] == step_idx]
         n_feats = step_df['n_features'].iloc[0] if len(step_df) > 0 else '?'
-        row = f"{step['label']:<16} | {n_feats:<3}"
+        row = f"{step['label']:<25} | {n_feats:<3}"
 
         for task in ['binary', 'extremes', '4level']:
             for eval_mode in ['ws', 'group']:
