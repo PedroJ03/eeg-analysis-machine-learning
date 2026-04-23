@@ -16,13 +16,13 @@ from pathlib import Path
 import re
 from collections import defaultdict
 
-# Configuración general
-plt.rcParams['font.size'] = 11
-plt.rcParams['axes.labelsize'] = 12
-plt.rcParams['axes.titlesize'] = 13
-plt.rcParams['xtick.labelsize'] = 10
-plt.rcParams['ytick.labelsize'] = 10
-plt.rcParams['legend.fontsize'] = 11
+# Configuración general - FUENTES MÁS GRANDES
+plt.rcParams['font.size'] = 18
+plt.rcParams['axes.labelsize'] = 20
+plt.rcParams['axes.titlesize'] = 22
+plt.rcParams['xtick.labelsize'] = 16
+plt.rcParams['ytick.labelsize'] = 16
+plt.rcParams['legend.fontsize'] = 17
 
 # COLORES
 COLOR_WS = '#D2691E'    # Naranja (Intra-Sujeto)
@@ -35,21 +35,24 @@ TASK_COLORS = {
     '4level': '#FF5722'    # Naranja/Rojo coral
 }
 
-# Directorios
+# Directorios - CORREGIDOS PARA /output/
 BASE_DIR = Path('/home/pedroj/Desktop/eeg-analysis-machine-learning')
-RESULTS_DIR = BASE_DIR / 'ml_analysis' / 'results'
-OUTPUT_DIR = BASE_DIR / 'docs' / 'figuras'
+RESULTS_DIR = BASE_DIR / 'output' / 'results' / 'saturacion'
+OUTPUT_DIR = BASE_DIR / 'output' / 'figuras' / 'saturacion'
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # ==============================================================================
-# PARTE 1: GRÁFICOS DE SATURACIÓN SEPARADOS
+# PARTE 1: GRÁFICOS DE SATURACIÓN SEPARADOS (POR MODELO Y EVALUACIÓN)
 # ==============================================================================
 
-def generate_saturation_WS_only():
-    """Genera solo las gráficas de Within-Subject (fila superior) - CON GAMMA"""
+def generate_individual_saturation_plots():
+    """Genera 4 archivos individuales para saturación: (WS/LOSO) x (RF/SVM)"""
     
-    # Usar datos CON GAMMA
     csv_path = RESULTS_DIR / 'feature_saturation_results_CON_GAMMA.csv'
+    if not csv_path.exists():
+        print(f"Error: No se encontró el archivo de resultados en {csv_path}")
+        return
+        
     df = pd.read_csv(csv_path)
     
     # Labels actualizados con Gamma
@@ -66,6 +69,7 @@ def generate_saturation_WS_only():
     step_labels = [s['label'] for s in PROGRESSIVE_STEPS]
     step_x = np.array(range(len(step_labels)))
     
+    # Obtener dimensiones (número de features)
     n_features_per_step = []
     for step_idx in step_x:
         subset = df[df['step'] == step_idx]
@@ -74,247 +78,98 @@ def generate_saturation_WS_only():
         else:
             n_features_per_step.append(0)
     
-    offset = 0.28  # AUMENTADO significativamente para más separación entre líneas
-    
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=True)
-    fig.suptitle('Análisis de Saturación de Features\nEvaluación Intra-Sujeto (WS)',
-                 fontsize=15, fontweight='bold', y=0.98)
-    
+    # Configuraciones de exportación
     configs = [
-        ('rf', 'Intra-Sujeto (WS) - Random Forest', 0),
-        ('svm', 'Intra-Sujeto (WS) - SVM', 1),
+        ('ws', 'rf', '01_saturacion_WS_RF', 'Intra-Sujeto (WS) - Random Forest'),
+        ('ws', 'svm', '01_saturacion_WS_SVM', 'Intra-Sujeto (WS) - SVM'),
+        ('group', 'rf', '02_saturacion_LOSO_RF', 'Entre-Sujetos (LOSO) - Random Forest'),
+        ('group', 'svm', '02_saturacion_LOSO_SVM', 'Entre-Sujetos (LOSO) - SVM'),
     ]
     
-    for model, title, col in configs:
-        ax = axes[col]
-        ax.set_title(title, fontsize=13, fontweight='bold', pad=10)
+    offset = 0.28
+    
+    for eval_mode, model, filename, title in configs:
+        fig, ax = plt.subplots(figsize=(12, 9))
+        ax.set_title(title, fontsize=24, fontweight='bold', pad=25)
         
-        eval_mode = 'ws'
+        # Extraer datos de forma robusta
+        accs_bin, stds_bin = [], []
+        accs_ext, stds_ext = [], []
+        accs_4l, stds_4l = [], []
         
-        # Binario (izquierda) - Cuadrados, línea sólida, marcador relleno
-        accs_bin = []
-        stds_bin = []
         for step_idx in step_x:
-            subset = df[(df['step'] == step_idx) & (df['eval'] == eval_mode) & 
-                       (df['model'] == model) & (df['task'] == 'binary')]
-            accs_bin.append(subset['accuracy'].mean())
-            stds_bin.append(subset['accuracy'].std())
-        
+            # Binario
+            b = df[(df['step'] == step_idx) & (df['eval'] == eval_mode) & 
+                   (df['model'] == model) & (df['task'] == 'binary')]
+            accs_bin.append(b['accuracy'].mean() if not b.empty else 0)
+            stds_bin.append(b['accuracy'].std() if not b.empty else 0)
+            
+            # Extremos
+            e = df[(df['step'] == step_idx) & (df['eval'] == eval_mode) & 
+                   (df['model'] == model) & (df['task'] == 'extremes')]
+            accs_ext.append(e['accuracy'].mean() if not e.empty else 0)
+            stds_ext.append(e['accuracy'].std() if not e.empty else 0)
+            
+            # 4 Clases
+            l = df[(df['step'] == step_idx) & (df['eval'] == eval_mode) & 
+                   (df['model'] == model) & (df['task'] == '4level')]
+            accs_4l.append(l['accuracy'].mean() if not l.empty else 0)
+            stds_4l.append(l['accuracy'].std() if not l.empty else 0)
+
+        # Plotear
         x_bin = step_x - offset
         ax.errorbar(x_bin, accs_bin, yerr=stds_bin, fmt='s-', color=TASK_COLORS['binary'],
-                   label='Binario', linewidth=2.5, markersize=10,
-                   capsize=5, capthick=2, elinewidth=2,
-                   markerfacecolor=TASK_COLORS['binary'], markeredgewidth=2)
-        
-        # Extremos (centro) - Círculos, línea sólida, marcador relleno
-        accs_ext = []
-        stds_ext = []
-        for step_idx in step_x:
-            subset = df[(df['step'] == step_idx) & (df['eval'] == eval_mode) & 
-                       (df['model'] == model) & (df['task'] == 'extremes')]
-            accs_ext.append(subset['accuracy'].mean())
-            stds_ext.append(subset['accuracy'].std())
+                   label='Binario', linewidth=3.5, markersize=14, capsize=7, capthick=2.5,
+                   markerfacecolor=TASK_COLORS['binary'], markeredgewidth=2.5)
         
         ax.errorbar(step_x, accs_ext, yerr=stds_ext, fmt='o-', color=TASK_COLORS['extremes'],
-                   label='Extremos', linewidth=2.5, markersize=10,
-                   capsize=5, capthick=2, elinewidth=2,
-                   markerfacecolor=TASK_COLORS['extremes'], markeredgewidth=2)
-        
-        # 4 Clases (derecha) - Cuadrados, línea sólida, marcador relleno
-        accs_4l = []
-        stds_4l = []
-        for step_idx in step_x:
-            subset = df[(df['step'] == step_idx) & (df['eval'] == eval_mode) & 
-                       (df['model'] == model) & (df['task'] == '4level')]
-            accs_4l.append(subset['accuracy'].mean())
-            stds_4l.append(subset['accuracy'].std())
+                   label='Extremos', linewidth=3.5, markersize=14, capsize=7, capthick=2.5,
+                   markerfacecolor=TASK_COLORS['extremes'], markeredgewidth=2.5)
         
         x_4l = step_x + offset
-        ax.errorbar(x_4l, accs_4l, yerr=stds_4l, fmt='s-', color=TASK_COLORS['4level'],
-                   label='4 Clases', linewidth=2.5, markersize=10,
-                   capsize=5, capthick=2, elinewidth=2,
-                   markerfacecolor=TASK_COLORS['4level'], markeredgewidth=2)
+        ax.errorbar(x_4l, accs_4l, yerr=stds_4l, fmt='^-', color=TASK_COLORS['4level'],
+                   label='4 Clases', linewidth=3.5, markersize=14, capsize=7, capthick=2.5,
+                   markerfacecolor=TASK_COLORS['4level'], markeredgewidth=2.5)
         
-        # Etiquetas de valores REPOSICIONADAS - TODOS EN NEGRO para mejor legibilidad
+        # Anotaciones
         for i in range(len(step_x)):
-            # Binario (izquierda): arriba
             ax.annotate(f'{accs_bin[i]:.2f}', (x_bin[i], accs_bin[i]),
-                       textcoords='offset points', xytext=(-5, 18),
-                       fontsize=8, ha='center', color='black', fontweight='bold')
-            # Extremos (centro, valor más alto en WS): ABAJO para no tapar con el borde superior
+                       textcoords='offset points', xytext=(-5, 22),
+                       fontsize=11, ha='center', color='black', fontweight='bold')
+            
+            y_off_ext = 25 if (eval_mode == 'ws' or i % 2 == 0) else -30
             ax.annotate(f'{accs_ext[i]:.2f}', (step_x[i], accs_ext[i]),
-                       textcoords='offset points', xytext=(0, -22),
-                       fontsize=8, ha='center', color='black', fontweight='bold')
-            # 4 Clases (derecha, valor más bajo): arriba
+                       textcoords='offset points', xytext=(0, y_off_ext),
+                       fontsize=11, ha='center', color='black', fontweight='bold')
+            
+            y_off_4 = 22 if eval_mode == 'ws' else -25
             ax.annotate(f'{accs_4l[i]:.2f}', (x_4l[i], accs_4l[i]),
-                       textcoords='offset points', xytext=(5, 18),
-                       fontsize=8, ha='center', color='black', fontweight='bold')
+                       textcoords='offset points', xytext=(5, y_off_4),
+                       fontsize=11, ha='center', color='black', fontweight='bold')
 
-        # Configurar ejes
+        # Ejes y Leyenda
         ax.set_xticks(step_x)
-        ax.set_xticklabels(step_labels, rotation=30, ha='right', fontsize=10)
-        if col == 0:
-            ax.set_ylabel('Accuracy', fontsize=12, fontweight='bold')
-        ax.set_xlabel('Grupos de Features (acumulativos)', fontsize=11, fontweight='bold')
-
-        # Leyenda movida abajo a la derecha (mejor para WS donde los valores están arriba)
-        ax.legend(loc='lower right', fontsize=10, framealpha=0.95,
-                 edgecolor='black', fancybox=True, shadow=True)
-        ax.grid(True, alpha=0.4, linestyle='--', linewidth=0.8)
-        ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
-        ax.set_ylim(0.20, 0.85)  # Aumentado límite superior para dar más espacio
-        ax.set_facecolor('white')
-
-        # Eje superior con dimensiones (estilo original: "8d", "12d", etc.)
+        ax.set_xticklabels(step_labels, rotation=35, ha='right', fontsize=16)
+        ax.set_ylabel('Accuracy', fontsize=22, fontweight='bold')
+        ax.set_xlabel('Grupos de Features (acumulativos)', fontsize=20, fontweight='bold', labelpad=15)
+        
         ax2 = ax.twiny()
         ax2.set_xlim(ax.get_xlim())
         ax2.set_xticks(step_x)
-        ax2.set_xticklabels([f'{n}d' for n in n_features_per_step], fontsize=9, color='gray')
-        ax2.set_xlabel('Dims', fontsize=10, color='gray')
-
-    plt.tight_layout(rect=[0, 0.02, 1, 0.95])
-    path = OUTPUT_DIR / 'saturation_WS_only.png'
-    fig.savefig(path, dpi=300, bbox_inches='tight', facecolor='white')
-    print(f"✓ Gráfico WS guardado: {path}")
-    plt.close(fig)
-
-
-def generate_saturation_LOSO_only():
-    """Genera solo las gráficas de Leave-One-Subject-Out (fila inferior) - CON GAMMA"""
-    
-    # Usar datos CON GAMMA
-    csv_path = RESULTS_DIR / 'feature_saturation_results_CON_GAMMA.csv'
-    df = pd.read_csv(csv_path)
-    
-    # Labels actualizados con Gamma
-    PROGRESSIVE_STEPS = [
-        {'groups': 'E', 'label': 'Stats'},
-        {'groups': 'EBg', 'label': '+ Bandas+γ'},
-        {'groups': 'EBgW', 'label': '+ Wavelet'},
-        {'groups': 'EBgWR', 'label': '+ Ratios'},
-        {'groups': 'EBgWRH', 'label': '+ Hjorth'},
-        {'groups': 'EBgWRHN', 'label': '+ Entropia'},
-        {'groups': 'EBgWRHNZ', 'label': '+ Z-Cross'},
-    ]
-    
-    step_labels = [s['label'] for s in PROGRESSIVE_STEPS]
-    step_x = np.array(range(len(step_labels)))
-    
-    n_features_per_step = []
-    for step_idx in step_x:
-        subset = df[df['step'] == step_idx]
-        if not subset.empty:
-            n_features_per_step.append(int(subset['n_features'].iloc[0]))
-        else:
-            n_features_per_step.append(0)
-    
-    offset = 0.28  # AUMENTADO significativamente para más separación entre líneas
-    
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=True)
-    fig.suptitle('Análisis de Saturación de Features\nEvaluación Entre-Sujetos (LOSO)',
-                 fontsize=15, fontweight='bold', y=0.98)
-    
-    configs = [
-        ('rf', 'Entre-Sujetos (LOSO) - Random Forest', 0),
-        ('svm', 'Entre-Sujetos (LOSO) - SVM', 1),
-    ]
-    
-    for model, title, col in configs:
-        ax = axes[col]
-        ax.set_title(title, fontsize=13, fontweight='bold', pad=10)
+        ax2.set_xticklabels([f'{n}d' for n in n_features_per_step], fontsize=14, color='gray')
+        ax2.set_xlabel('Dimensiones', fontsize=16, color='gray', labelpad=10)
         
-        eval_mode = 'group'
-        
-        # Binario
-        accs_bin = []
-        stds_bin = []
-        for step_idx in step_x:
-            subset = df[(df['step'] == step_idx) & (df['eval'] == eval_mode) & 
-                       (df['model'] == model) & (df['task'] == 'binary')]
-            accs_bin.append(subset['accuracy'].mean())
-            stds_bin.append(subset['accuracy'].std())
-        
-        x_bin = step_x - offset
-        ax.errorbar(x_bin, accs_bin, yerr=stds_bin, fmt='s-', color=TASK_COLORS['binary'],
-                   label='Binario', linewidth=2.5, markersize=10,
-                   capsize=5, capthick=2, elinewidth=2,
-                   markerfacecolor=TASK_COLORS['binary'], markeredgewidth=2)
-        
-        # Extremos
-        accs_ext = []
-        stds_ext = []
-        for step_idx in step_x:
-            subset = df[(df['step'] == step_idx) & (df['eval'] == eval_mode) & 
-                       (df['model'] == model) & (df['task'] == 'extremes')]
-            accs_ext.append(subset['accuracy'].mean())
-            stds_ext.append(subset['accuracy'].std())
-        
-        ax.errorbar(step_x, accs_ext, yerr=stds_ext, fmt='o-', color=TASK_COLORS['extremes'],
-                   label='Extremos', linewidth=2.5, markersize=10,
-                   capsize=5, capthick=2, elinewidth=2,
-                   markerfacecolor=TASK_COLORS['extremes'], markeredgewidth=2)
-        
-        # 4 Clases
-        accs_4l = []
-        stds_4l = []
-        for step_idx in step_x:
-            subset = df[(df['step'] == step_idx) & (df['eval'] == eval_mode) & 
-                       (df['model'] == model) & (df['task'] == '4level')]
-            accs_4l.append(subset['accuracy'].mean())
-            stds_4l.append(subset['accuracy'].std())
-        
-        x_4l = step_x + offset
-        ax.errorbar(x_4l, accs_4l, yerr=stds_4l, fmt='s-', color=TASK_COLORS['4level'],
-                   label='4 Clases', linewidth=2.5, markersize=10,
-                   capsize=5, capthick=2, elinewidth=2,
-                   markerfacecolor=TASK_COLORS['4level'], markeredgewidth=2)
-        
-        # Etiquetas REPOSICIONADAS para LOSO - alternadas arriba/abajo para evitar superposición
-        for i in range(len(step_x)):
-            # Binario (valor medio ~0.50): arriba
-            ax.annotate(f'{accs_bin[i]:.2f}', (x_bin[i], accs_bin[i]),
-                       textcoords='offset points', xytext=(-5, 18),
-                       fontsize=8, ha='center', color='black', fontweight='bold')
-            # Extremos (valor más alto ~0.51): alternar arriba/abajo según posición
-            if i % 2 == 0:
-                ax.annotate(f'{accs_ext[i]:.2f}', (step_x[i], accs_ext[i]),
-                           textcoords='offset points', xytext=(0, 20),
-                           fontsize=8, ha='center', color='black', fontweight='bold')
-            else:
-                ax.annotate(f'{accs_ext[i]:.2f}', (step_x[i], accs_ext[i]),
-                           textcoords='offset points', xytext=(0, -20),
-                           fontsize=8, ha='center', color='black', fontweight='bold')
-            # 4 Clases (valor más bajo ~0.27): siempre abajo
-            ax.annotate(f'{accs_4l[i]:.2f}', (x_4l[i], accs_4l[i]),
-                       textcoords='offset points', xytext=(5, -18),
-                       fontsize=8, ha='center', color='black', fontweight='bold')
-        
-        # Configurar ejes
-        ax.set_xticks(step_x)
-        ax.set_xticklabels(step_labels, rotation=30, ha='right', fontsize=10)
-        if col == 0:
-            ax.set_ylabel('Accuracy', fontsize=12, fontweight='bold')
-        ax.set_xlabel('Grupos de Features (acumulativos)', fontsize=11, fontweight='bold')
-
-        # Leyenda a la izquierda a media altura
-        ax.legend(loc='center left', fontsize=10, framealpha=0.95,
-                 edgecolor='black', fancybox=True, shadow=True, bbox_to_anchor=(0.02, 0.5))
-        ax.grid(True, alpha=0.4, linestyle='--', linewidth=0.8)
+        ax.legend(loc='lower right' if eval_mode == 'ws' else 'center left', 
+                  fontsize=16, framealpha=0.95, edgecolor='black', shadow=True)
+        ax.grid(True, alpha=0.4, linestyle='--')
         ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
-        ax.set_ylim(0.20, 0.60)  # Rango más bajo para LOSO (valores ~0.25-0.52)
-        ax.set_facecolor('white')
-
-        ax2 = ax.twiny()
-        ax2.set_xlim(ax.get_xlim())
-        ax2.set_xticks(step_x)
-        ax2.set_xticklabels([f'{n}d' for n in n_features_per_step], fontsize=9, color='gray')
-        ax2.set_xlabel('Dims', fontsize=10, color='gray')
-
-    plt.tight_layout(rect=[0, 0.02, 1, 0.95])
-    path = OUTPUT_DIR / 'saturation_LOSO_only.png'
-    fig.savefig(path, dpi=300, bbox_inches='tight', facecolor='white')
-    print(f"✓ Gráfico LOSO guardado: {path}")
-    plt.close(fig)
+        ax.set_ylim(0.20, 0.85 if eval_mode == 'ws' else 0.65)
+            
+        plt.tight_layout()
+        out_path = OUTPUT_DIR / f'{filename}.png'
+        fig.savefig(out_path, dpi=300, bbox_inches='tight', facecolor='white')
+        print(f"✓ Generado: {out_path.name}")
+        plt.close(fig)
 
 
 # ==============================================================================
@@ -324,7 +179,7 @@ def generate_saturation_LOSO_only():
 def generate_features_individuales_separated():
     """Genera 3 archivos separados: 4 Clases, Binario, Extremos (SIN línea de Chance)"""
     
-    RESULTS_TEXT_DIR = BASE_DIR / 'output' / 'results'
+    RESULTS_TEXT_DIR = BASE_DIR / 'output' / 'results' / 'features_individuales'
     FEATURES_INDIVIDUALES = ['B', 'Bg', 'E', 'W', 'R', 'H', 'N', 'Z']
     all_data = []
     
@@ -481,24 +336,19 @@ if __name__ == '__main__':
     print("GENERANDO GRÁFICOS SEPARADOS PARA EL INFORME")
     print("="*70)
     
-    print("\n1. Generando gráficos de saturación separados...")
-    print("   a) Solo WS (Intra-Sujeto)...")
-    generate_saturation_WS_only()
-    print("   b) Solo LOSO (Entre-Sujetos)...")
-    generate_saturation_LOSO_only()
+    print("\n1. Generando gráficos de saturación individuales...")
+    generate_individual_saturation_plots()
     
-    print("\n2. Generando gráficos de features individuales separados por tarea...")
-    print("   (SIN líneas de Chance)")
-    generate_features_individuales_separated()
+    # Comentado para cumplir con el pedido de 'solo saturación' en la ejecución actual
+    # print("\n2. Generando gráficos de features individuales separados por tarea...")
+    # generate_features_individuales_separated()
     
     print("\n" + "="*70)
-    print("¡TODOS LOS GRÁFICOS GENERADOS EXITOSAMENTE!")
+    print("¡PROCESO FINALIZADO!")
     print("="*70)
     print(f"\nArchivos guardados en: {OUTPUT_DIR}")
     print("\n--- SATURACIÓN ---")
-    print("- saturation_WS_only.png")
-    print("- saturation_LOSO_only.png")
-    print("\n--- FEATURES INDIVIDUALES ---")
-    print("- features_individuales_4CLASES.png")
-    print("- features_individuales_BINARIO.png")
-    print("- features_individuales_EXTREMOS.png")
+    print("- 01_saturacion_WS_RF.png")
+    print("- 01_saturacion_WS_SVM.png")
+    print("- 02_saturacion_LOSO_RF.png")
+    print("- 02_saturacion_LOSO_SVM.png")
